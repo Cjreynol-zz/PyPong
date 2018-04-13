@@ -1,13 +1,5 @@
-# Chad Reynolds
-# 12/28/13
-# runs the game
+from controller import Controller
 
-import pygame
-from gamemanager import GameManager
-
-def main():
-	pygame.init()
-	game = GameManager()
-	pygame.quit()
-
-main()	
+if __name__ == "__main__":
+    controller = Controller()
+    controller.run_gameloop()
