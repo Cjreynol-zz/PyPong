@@ -1,5 +1,6 @@
 from random import choice
 
+from collision_dir import CollisionDir
 from vel_rect import VelRect
 
 
@@ -42,18 +43,42 @@ class PyPong:
         self.paddle2 = VelRect(paddle2_start, self.PADDLE_DIMENSIONS)
 
     def progress_game(self):
+        self._move_ball()
+        self._move_paddles()
+        self._resolve_collisions()
+            
+    def _move_ball(self):
         self.ball.move_vel()
-        if self.ball.left < 0:                     self.score(2)
-        if self.ball.right > self.screen_width:    self.score(1)
+        if self.ball.left < 0:
+            self._score(2)
+        elif self.ball.right > self.screen_width:
+            self._score(1)
+        elif self.ball.top < 0:
+            self.ball.y = 0
+            self.ball.reflect_y()
+        elif self.ball.bottom > self.screen_height:
+            self.ball.y = self.screen_height - self.BALL_DIMENSIONS[1]
+            self.ball.reflect_y()
 
+    def _move_paddles(self):
         for paddle in [self.paddle1, self.paddle2]:
             paddle.move_vel()
-            if paddle.collision_with(self.ball):
+            if paddle.top < 0:
+                paddle.y = 0
+                paddle.reflect_y()
+            elif paddle.bottom > self.screen_height:
+                paddle.y = self.screen_height - self.PADDLE_DIMENSIONS[1]
+                paddle.reflect_y()
+
+    def _resolve_collisions(self):
+        for paddle in [self.paddle1, self.paddle2]:
+            collision_dir = self.ball.collision_with(paddle)
+            if collision_dir in [CollisionDir.EAST, CollisionDir.WEST]:
+                self.ball.x = self.ball.last_x
                 self.ball.reflect_x()
-            
-        for game_object in [self.ball, self.paddle1, self.paddle2]:
-            if game_object.top < 0 or game_object.bottom > self.screen_height:
-                game_object.reflect_y()
+            elif collision_dir in [CollisionDir.NORTH, CollisionDir.SOUTH]:
+                self.ball.y = self.ball.last_y
+                self.ball.reflect_y()
 
     def start_ball(self):
         dy = choice([self.BALL_Y_VEL, -self.BALL_Y_VEL])
@@ -66,7 +91,7 @@ class PyPong:
         for game_object in [self.ball, self.paddle1, self.paddle2]:
             game_object.reset()
 
-    def score(self, player_num):
+    def _score(self, player_num):
         if player_num == 1:
             self.score1 += 1
             self.p1_start = False
